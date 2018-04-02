@@ -12,6 +12,7 @@ v4l2_sources = [
   'gstv4l2transform.c',
   'gstv4l2videodec.c',
   'gstv4l2vidorient.c',
+  'gstxilinxscd.c',
   'v4l2_calls.c',
   'v4l2-utils.c',
   'tuner.c',
