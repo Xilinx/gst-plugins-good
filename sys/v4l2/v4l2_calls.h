@@ -134,5 +134,13 @@ gboolean	gst_v4l2_set_controls		(GstV4l2Object * v4l2object,
 
 gboolean        gst_v4l2_get_capabilities       (GstV4l2Object * v4l2object);
 
+gboolean	gst_v4l2_subscribe_event (GstV4l2Object * v4l2object,
+						 guint32 type,
+						 guint32 id,
+						 guint flags);
+
+gboolean	gst_v4l2_dqevent (GstV4l2Object * v4l2object,
+						 struct v4l2_event * event);
+
 
 #endif /* __V4L2_CALLS_H__ */

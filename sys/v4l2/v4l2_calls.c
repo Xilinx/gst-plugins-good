@@ -1132,3 +1132,54 @@ output_failed:
   }
   return FALSE;
 }
+
+gboolean
+gst_v4l2_subscribe_event (GstV4l2Object * v4l2object, guint32 type, guint32 id,
+    guint32 flags)
+{
+  struct v4l2_event_subscription argp;
+
+  GST_DEBUG_OBJECT (v4l2object->element,
+      "trying to subscribe to event %d (id: %u flags: 0x%08x)", type, id,
+      flags);
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  argp.type = type;
+  argp.id = id;
+  argp.flags = flags;
+
+  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_SUBSCRIBE_EVENT, &argp) < 0)
+    goto subscribe_failed;
+
+  return TRUE;
+
+  /* ERRORS */
+subscribe_failed:
+  GST_ELEMENT_WARNING (v4l2object->element, RESOURCE, SETTINGS,
+      (_("Failed to subscribe to event %d on device %s."),
+          type, v4l2object->videodev), GST_ERROR_SYSTEM);
+  return FALSE;
+}
+
+gboolean
+gst_v4l2_dqevent (GstV4l2Object * v4l2object, struct v4l2_event * event)
+{
+  g_return_val_if_fail (event, FALSE);
+
+  if (!GST_V4L2_IS_OPEN (v4l2object))
+    return FALSE;
+
+  if (v4l2_ioctl (v4l2object->video_fd, VIDIOC_DQEVENT, event) < 0)
+    goto dqevent_failed;
+
+  return TRUE;
+
+  /* ERRORS */
+dqevent_failed:
+  GST_ELEMENT_WARNING (v4l2object->element, RESOURCE, SETTINGS,
+      (_("Failed to dequeue event on device %s."),
+          v4l2object->videodev), GST_ERROR_SYSTEM);
+  return FALSE;
+}
