@@ -50,7 +50,6 @@
 
 #include <gst/video/gstvideometa.h>
 #include <gst/video/gstvideopool.h>
-#include <gst/allocators/gstdmabuf.h>
 
 #include "gstv4l2src.h"
 
@@ -516,41 +515,6 @@ gst_v4l2src_decide_allocation (GstBaseSrc * bsrc, GstQuery * query)
   if (ret) {
     if (!gst_buffer_pool_set_active (src->v4l2object->pool, TRUE))
       goto activate_failed;
-  }
-
-  /* HACK */
-  if (src->v4l2object->mode == GST_V4L2_IO_DMABUF) {
-    GstV4l2BufferPool *pool = GST_V4L2_BUFFER_POOL_CAST (src->v4l2object->pool);
-    guint i;
-    GArray *fds;
-    GstStructure *s;
-
-    fds = g_array_new (FALSE, FALSE, sizeof (gint));
-    for (i = 0; i < VIDEO_MAX_FRAME; i++) {
-      if (pool->buffers[i]) {
-        GstMemory *mem;
-
-        mem = gst_buffer_peek_memory (pool->buffers[i], 0);
-        if (gst_is_dmabuf_memory (mem)) {
-          gint fd;
-
-          fd = gst_dmabuf_memory_get_fd (mem);
-          g_array_append_val (fds, fd);
-        } else {
-          GST_WARNING_OBJECT (src, "Got a not DMA buf in DMA mode?!");
-        }
-      }
-    }
-
-    GST_DEBUG_OBJECT (src, "DMA pool activated; collected %d buffers",
-        fds->len);
-
-    s = gst_structure_new ("dmaStruct", "dmaPtrArray", G_TYPE_ARRAY, fds, NULL);
-
-    gst_pad_push_event (GST_BASE_SRC_PAD (bsrc),
-        gst_event_new_custom (GST_EVENT_CUSTOM_DOWNSTREAM, s));
-
-    g_array_unref (fds);
   }
 
   return ret;
