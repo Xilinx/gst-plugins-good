@@ -1909,8 +1909,6 @@ static gboolean
 gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
     GstVideoInterlaceMode * interlace_mode)
 {
-  /* NB: If you add new return values, please fix mode_strings in
-   * gst_v4l2_object_add_interlace_mode */
   switch (field) {
     case V4L2_FIELD_ANY:
       GST_ERROR
@@ -2156,11 +2154,6 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
   GValue interlace_formats = { 0, };
   GstVideoInterlaceMode interlace_mode, prev = -1;
 
-  const gchar *mode_strings[] = { "progressive",
-    "interleaved",
-    "mixed"
-  };
-
   if (!g_str_equal (gst_structure_get_name (s), "video/x-raw"))
     return;
 
@@ -2182,8 +2175,10 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
   if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
       gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)) {
     GValue interlace_enum = { 0, };
+    const gchar *mode_string;
     g_value_init (&interlace_enum, G_TYPE_STRING);
-    g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
+    mode_string = gst_video_interlace_mode_to_string (interlace_mode);
+    g_value_set_string (&interlace_enum, mode_string);
     gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
     prev = interlace_mode;
   }
@@ -2199,8 +2194,10 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
       gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode) &&
       prev != interlace_mode) {
     GValue interlace_enum = { 0, };
+    const gchar *mode_string;
     g_value_init (&interlace_enum, G_TYPE_STRING);
-    g_value_set_string (&interlace_enum, mode_strings[interlace_mode]);
+    mode_string = gst_video_interlace_mode_to_string (interlace_mode);
+    g_value_set_string (&interlace_enum, mode_string);
     gst_value_list_append_and_take_value (&interlace_formats, &interlace_enum);
   }
 
