@@ -833,10 +833,14 @@ gst_v4l2_buffer_pool_start (GstBufferPool * bpool)
   if (!pclass->start (bpool))
     goto start_failed;
 
-  if (!V4L2_TYPE_IS_OUTPUT (obj->type))
+  if (!V4L2_TYPE_IS_OUTPUT (obj->type)) {
+    if (g_atomic_int_get (&pool->num_queued) < min_buffers)
+      goto queue_failed;
+
     pool->group_released_handler =
         g_signal_connect_swapped (pool->vallocator, "group-released",
         G_CALLBACK (gst_v4l2_buffer_pool_resurect_buffer), pool);
+  }
 
   return TRUE;
 
@@ -864,6 +868,11 @@ other_pool_failed:
   {
     GST_ERROR_OBJECT (pool, "failed to active the other pool %"
         GST_PTR_FORMAT, pool->other_pool);
+    return FALSE;
+  }
+queue_failed:
+  {
+    GST_ERROR_OBJECT (pool, "failed to queue buffers into the capture queue");
     return FALSE;
   }
 }
