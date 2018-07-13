@@ -1150,14 +1150,11 @@ gst_v4l2_allocator_import_userptr (GstV4l2Allocator * allocator,
   for (i = 0; i < group->n_mem; i++) {
     gsize maxsize, psize;
 
-    if (V4L2_TYPE_IS_MULTIPLANAR (allocator->type)) {
-      struct v4l2_pix_format_mplane *pix = &allocator->format.fmt.pix_mp;
-      maxsize = pix->plane_fmt[i].sizeimage;
-      psize = size[i];
-    } else {
-      maxsize = allocator->format.fmt.pix.sizeimage;
-      psize = img_size;
-    }
+    /* TODO request used size and maxsize seperatly */
+    if (V4L2_TYPE_IS_MULTIPLANAR (allocator->type))
+      maxsize = psize = size[i];
+    else
+      maxsize = psize = img_size;
 
     g_assert (psize <= img_size);
 
