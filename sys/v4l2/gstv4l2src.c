@@ -709,8 +709,11 @@ gst_v4l2src_query (GstBaseSrc * bsrc, GstQuery * query)
         goto done;
       }
 
-      /* min latency is the time to capture one frame */
+      /* min latency is the time to capture one frame/field */
       min_latency = gst_util_uint64_scale_int (GST_SECOND, fps_d, fps_n);
+      if (GST_VIDEO_INFO_INTERLACE_MODE (&obj->info) ==
+          GST_VIDEO_INTERLACE_MODE_ALTERNATE)
+        min_latency /= 2;
 
       /* max latency is total duration of the frame buffer */
       if (obj->pool != NULL)
@@ -936,7 +939,7 @@ retry:
         " delay %" GST_TIME_FORMAT, GST_TIME_ARGS (timestamp),
         GST_TIME_ARGS (gstnow), GST_TIME_ARGS (delay));
   } else {
-    /* we assume 1 frame latency otherwise */
+    /* we assume 1 frame/field latency otherwise */
     if (GST_CLOCK_TIME_IS_VALID (duration))
       delay = duration;
     else
