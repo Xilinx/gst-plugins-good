@@ -1937,6 +1937,9 @@ gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
     case V4L2_FIELD_INTERLACED_BT:
       *interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
       return TRUE;
+    case V4L2_FIELD_ALTERNATE:
+      *interlace_mode = GST_VIDEO_INTERLACE_MODE_ALTERNATE;
+      return TRUE;
     default:
       GST_ERROR ("Unknown enum v4l2_field %d", field);
       return FALSE;
@@ -2163,7 +2166,9 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
 {
   struct v4l2_format fmt;
   GValue interlace_formats = { 0, };
-  enum v4l2_field formats[] = { V4L2_FIELD_NONE, V4L2_FIELD_INTERLACED };
+  enum v4l2_field formats[] = { V4L2_FIELD_NONE,
+    V4L2_FIELD_INTERLACED, V4L2_FIELD_ALTERNATE
+  };
   gsize i;
   GstVideoInterlaceMode interlace_mode, prev = -1;
 
@@ -2177,7 +2182,7 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
 
   g_value_init (&interlace_formats, GST_TYPE_LIST);
 
-  /* Try twice - once for NONE, once for INTERLACED. */
+  /* Try thrice - once for NONE, once for INTERLACED and once for ALTERNATE. */
   for (i = 0; i < G_N_ELEMENTS (formats); i++) {
     memset (&fmt, 0, sizeof (fmt));
     fmt.type = v4l2object->type;
@@ -2185,6 +2190,9 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
     fmt.fmt.pix.height = height;
     fmt.fmt.pix.pixelformat = pixelformat;
     fmt.fmt.pix.field = formats[i];
+
+    if (fmt.fmt.pix.field == V4L2_FIELD_ALTERNATE)
+      fmt.fmt.pix.height /= 2;
 
     if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
         gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)
@@ -3125,6 +3133,9 @@ store_info:
   if (info->fps_n > 0 && info->fps_d > 0) {
     v4l2object->duration = gst_util_uint64_scale_int (GST_SECOND, info->fps_d,
         info->fps_n);
+    if (GST_VIDEO_INFO_INTERLACE_MODE (info) ==
+        GST_VIDEO_INTERLACE_MODE_ALTERNATE)
+      v4l2object->duration /= 2;
   } else {
     v4l2object->duration = GST_CLOCK_TIME_NONE;
   }
@@ -3154,6 +3165,27 @@ gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
   }
 
   return estride;
+}
+
+static enum v4l2_field
+get_v4l2_field_for_info (GstVideoInfo * info)
+{
+  if (!GST_VIDEO_INFO_IS_INTERLACED (info))
+    return V4L2_FIELD_NONE;
+
+  if (GST_VIDEO_INFO_INTERLACE_MODE (info) ==
+      GST_VIDEO_INTERLACE_MODE_ALTERNATE)
+    return V4L2_FIELD_ALTERNATE;
+
+  switch (GST_VIDEO_INFO_FIELD_ORDER (info)) {
+    case GST_VIDEO_FIELD_ORDER_TOP_FIELD_FIRST:
+      return V4L2_FIELD_INTERLACED_TB;
+    case GST_VIDEO_FIELD_ORDER_BOTTOM_FIELD_FIRST:
+      return V4L2_FIELD_INTERLACED_BT;
+    case GST_VIDEO_FIELD_ORDER_UNKNOWN:
+    default:
+      return V4L2_FIELD_INTERLACED;
+  }
 }
 
 static gboolean
@@ -3191,7 +3223,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
 
   pixelformat = fmtdesc->pixelformat;
   width = GST_VIDEO_INFO_WIDTH (&info);
-  height = GST_VIDEO_INFO_HEIGHT (&info);
+  height = GST_VIDEO_INFO_FIELD_HEIGHT (&info);
   fps_n = GST_VIDEO_INFO_FPS_N (&info);
   fps_d = GST_VIDEO_INFO_FPS_D (&info);
 
@@ -3201,16 +3233,11 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   if (!n_v4l_planes || !v4l2object->prefered_non_contiguous)
     n_v4l_planes = 1;
 
-  if (GST_VIDEO_INFO_IS_INTERLACED (&info)) {
+  field = get_v4l2_field_for_info (&info);
+  if (field != V4L2_FIELD_NONE)
     GST_DEBUG_OBJECT (v4l2object->element, "interlaced video");
-    /* ideally we would differentiate between types of interlaced video
-     * but there is not sufficient information in the caps..
-     */
-    field = V4L2_FIELD_INTERLACED;
-  } else {
+  else
     GST_DEBUG_OBJECT (v4l2object->element, "progressive video");
-    field = V4L2_FIELD_NONE;
-  }
 
   if (V4L2_TYPE_IS_OUTPUT (v4l2object->type)) {
     /* We first pick th main colorspace from the primaries */
@@ -3329,7 +3356,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       /* Try to guess colorspace according to pixelformat and size */
       if (GST_VIDEO_INFO_IS_YUV (&info)) {
         /* SD streams likely use SMPTE170M and HD streams REC709 */
-        if (width <= 720 && height <= 576)
+        if (width <= 720 && GST_VIDEO_INFO_HEIGHT (&info) <= 576)
           colorspace = V4L2_COLORSPACE_SMPTE170M;
         else
           colorspace = V4L2_COLORSPACE_REC709;
@@ -3734,6 +3761,7 @@ gst_v4l2_object_acquire_format (GstV4l2Object * v4l2object, GstVideoInfo * info)
   GstVideoFormat format;
   guint width, height;
   GstVideoAlignment align;
+  GstVideoInterlaceMode interlace_mode;
 
   gst_video_info_init (info);
   gst_video_alignment_reset (&align);
@@ -3783,21 +3811,25 @@ gst_v4l2_object_acquire_format (GstV4l2Object * v4l2object, GstVideoInfo * info)
     height = r->height;
   }
 
-  gst_video_info_set_format (info, format, width, height);
-
   switch (fmt.fmt.pix.field) {
     case V4L2_FIELD_ANY:
     case V4L2_FIELD_NONE:
-      info->interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
+      interlace_mode = GST_VIDEO_INTERLACE_MODE_PROGRESSIVE;
       break;
     case V4L2_FIELD_INTERLACED:
     case V4L2_FIELD_INTERLACED_TB:
     case V4L2_FIELD_INTERLACED_BT:
-      info->interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+      interlace_mode = GST_VIDEO_INTERLACE_MODE_INTERLEAVED;
+      break;
+    case V4L2_FIELD_ALTERNATE:
+      interlace_mode = GST_VIDEO_INTERLACE_MODE_ALTERNATE;
       break;
     default:
       goto unsupported_field;
   }
+
+  gst_video_info_set_interlaced_format (info, format, interlace_mode, width,
+      height);
 
   gst_v4l2_object_get_colorspace (&fmt, &info->colorimetry);
 
