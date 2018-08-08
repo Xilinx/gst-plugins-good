@@ -610,7 +610,8 @@ gst_v4l2_video_dec_handle_frame (GstVideoDecoder * decoder,
     /* Ensure input internal pool is active */
     if (!gst_buffer_pool_is_active (pool)) {
       GstStructure *config = gst_buffer_pool_get_config (pool);
-      guint min = MAX (self->v4l2output->min_buffers, GST_V4L2_MIN_BUFFERS);
+      guint min = MAX (self->v4l2output->min_buffers,
+          GST_V4L2_MIN_BUFFERS (self->v4l2output));
       guint max = VIDEO_MAX_FRAME;
 
       gst_buffer_pool_config_set_params (config, self->input_state->caps,
