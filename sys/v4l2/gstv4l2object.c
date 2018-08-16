@@ -51,7 +51,6 @@ GST_DEBUG_CATEGORY_EXTERN (v4l2_debug);
 #define DEFAULT_PROP_CHANNEL            NULL
 #define DEFAULT_PROP_FREQUENCY          0
 #define DEFAULT_PROP_IO_MODE            GST_V4L2_IO_AUTO
-#define DEFAULT_PROP_STRIDE_ALIGNMENT   16
 
 #define ENCODED_BUFFER_SIZE             (1 * 1024 * 1024)
 
@@ -420,18 +419,6 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
           "When enabled, the pixel aspect ratio will be enforced", TRUE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
-  /**
-   * GstV4l2Src:stride-align:
-   *
-   * Stride alignment
-   */
-  g_object_class_install_property (gobject_class, PROP_STRIDE_ALIGNMENT,
-      g_param_spec_uint ("stride-align", "Stride alignment",
-          "Stride will be aligned to specified value",
-          0, 256,
-          DEFAULT_PROP_STRIDE_ALIGNMENT,
-          G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS | GST_PARAM_MUTABLE_READY));
-
 }
 
 void
@@ -507,8 +494,6 @@ gst_v4l2_object_new (GstElement * element,
   v4l2object->n_v4l2_planes = 0;
 
   v4l2object->no_initial_format = FALSE;
-
-  v4l2object->stride_align = DEFAULT_PROP_STRIDE_ALIGNMENT;
 
   return v4l2object;
 }
@@ -676,9 +661,6 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
     case PROP_FORCE_ASPECT_RATIO:
       v4l2object->keep_aspect = g_value_get_boolean (value);
       break;
-    case PROP_STRIDE_ALIGNMENT:
-      v4l2object->stride_align = g_value_get_uint (value);
-      break;
     default:
       return FALSE;
       break;
@@ -778,9 +760,6 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
       break;
     case PROP_FORCE_ASPECT_RATIO:
       g_value_set_boolean (value, v4l2object->keep_aspect);
-      break;
-    case PROP_STRIDE_ALIGNMENT:
-      g_value_set_uint (value, v4l2object->stride_align);
       break;
     default:
       return FALSE;
@@ -3391,12 +3370,6 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       if (GST_VIDEO_FORMAT_INFO_IS_TILED (info.finfo))
         stride = GST_VIDEO_TILE_X_TILES (stride) <<
             GST_VIDEO_FORMAT_INFO_TILE_WS (info.finfo);
-
-      gint align, remainder;
-      align = v4l2object->stride_align;
-      remainder = (stride & (align - 1));
-      if (remainder)
-          stride = stride - remainder + align;
 
       format.fmt.pix_mp.plane_fmt[i].bytesperline = stride;
     }
