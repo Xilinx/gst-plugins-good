@@ -929,7 +929,7 @@ gst_v4l2_object_close (GstV4l2Object * v4l2object)
     g_free (v4l2object->par);
     v4l2object->par = NULL;
   }
-  
+
   if (v4l2object->channel) {
     g_free (v4l2object->channel);
     v4l2object->channel = NULL;
