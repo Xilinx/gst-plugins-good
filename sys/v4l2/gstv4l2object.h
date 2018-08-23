@@ -178,9 +178,6 @@ struct _GstV4l2Object {
   /* Allow to skip reading initial format through G_FMT. Some devices
    * just fails if you don't call S_FMT first. (ex: M2M decoders) */
   gboolean no_initial_format;
-
-  /* Stride alignment */
-  guint32 stride_align;
 };
 
 struct _GstV4l2ObjectClassHelper {
@@ -205,8 +202,7 @@ GType gst_v4l2_object_get_type (void);
     PROP_CAPTURE_IO_MODE,     \
     PROP_EXTRA_CONTROLS,      \
     PROP_PIXEL_ASPECT_RATIO,  \
-    PROP_FORCE_ASPECT_RATIO,  \
-    PROP_STRIDE_ALIGNMENT
+    PROP_FORCE_ASPECT_RATIO
 
 /* create/destroy */
 GstV4l2Object*  gst_v4l2_object_new       (GstElement * element,
@@ -248,8 +244,9 @@ GstCaps*      gst_v4l2_object_get_codec_caps (void);
 gint          gst_v4l2_object_extrapolate_stride (const GstVideoFormatInfo * finfo,
                                                   gint plane, gint stride);
 
-gboolean      gst_v4l2_object_set_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error *error);
-gboolean      gst_v4l2_object_try_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error *error);
+gboolean     gst_v4l2_object_set_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error * error);
+gboolean     gst_v4l2_object_try_format  (GstV4l2Object * v4l2object, GstCaps * caps, GstV4l2Error * error);
+gboolean     gst_v4l2_object_try_import  (GstV4l2Object * v4l2object, GstBuffer * buffer);
 
 gboolean      gst_v4l2_object_caps_equal  (GstV4l2Object * v4l2object, GstCaps * caps);
 
