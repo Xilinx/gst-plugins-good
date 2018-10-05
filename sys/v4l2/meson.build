@@ -5,6 +5,7 @@ v4l2_sources = [
   'gstv4l2deviceprovider.c',
   'gstv4l2object.c',
   'gstv4l2bufferpool.c',
+  'gstv4l2media.c',
   'gstv4l2sink.c',
   'gstv4l2src.c',
   'gstv4l2radio.c',
@@ -17,7 +18,7 @@ v4l2_sources = [
   'v4l2-utils.c',
   'tuner.c',
   'tunerchannel.c',
-  'tunernorm.c'
+  'tunernorm.c',
 ]
 
 cdata.set('GST_V4L2_ENABLE_PROBE', get_option('v4l2-probe'))
