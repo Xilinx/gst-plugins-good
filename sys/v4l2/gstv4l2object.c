@@ -567,8 +567,7 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
 {
   switch (prop_id) {
     case PROP_DEVICE:
-      g_free (v4l2object->videodev);
-      v4l2object->videodev = g_value_dup_string (value);
+      gst_v4l2_object_set_device (v4l2object, g_value_get_string (value));
       break;
     case PROP_BRIGHTNESS:
     case PROP_CONTRAST:
@@ -4516,4 +4515,11 @@ gst_v4l2_object_try_import (GstV4l2Object * obj, GstBuffer * buffer)
 
   /* for the remaining, only the kernel driver can tell */
   return TRUE;
+}
+
+void
+gst_v4l2_object_set_device (GstV4l2Object * v4l2object, const gchar * device)
+{
+  g_free (v4l2object->videodev);
+  v4l2object->videodev = g_strdup (device);
 }
