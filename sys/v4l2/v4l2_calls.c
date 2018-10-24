@@ -1146,6 +1146,8 @@ gst_v4l2_subscribe_event (GstV4l2Object * v4l2object, guint32 type, guint32 id,
       "trying to subscribe to event %d (id: %u flags: 0x%08x)", type, id,
       flags);
 
+  memset (&argp, 0, sizeof (argp));
+
   if (!GST_V4L2_IS_OPEN (v4l2object))
     return FALSE;
 
