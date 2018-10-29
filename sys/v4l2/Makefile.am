@@ -8,6 +8,7 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				gstv4l2deviceprovider.c \
 				gstv4l2object.c \
 				gstv4l2bufferpool.c \
+				gstv4l2capturebufferpool.c \
 				gstv4l2media.c \
 				gstv4l2sink.c \
 				gstv4l2src.c \
@@ -17,6 +18,7 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				gstv4l2videodec.c \
 				gstv4l2vidorient.c \
 				gstxilinxscd.c \
+				gstxlnxabrscaler.c \
 				v4l2_calls.c \
 				v4l2-utils.c \
 				tuner.c \
@@ -48,6 +50,7 @@ noinst_HEADERS = \
 	ext/videodev2.h \
 	gstv4l2allocator.h \
 	gstv4l2bufferpool.h \
+	gstv4l2capturebufferpool.h \
 	gstv4l2media.h \
 	gstv4l2colorbalance.h \
 	gstv4l2deviceprovider.h \
@@ -60,6 +63,7 @@ noinst_HEADERS = \
 	gstv4l2videodec.h \
 	gstv4l2vidorient.h \
 	gstxilinxscd.h \
+	gstxlnxabrscaler.h \
 	v4l2_calls.h \
 	v4l2-utils.h \
 	tuner.h \
