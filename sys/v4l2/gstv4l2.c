@@ -58,6 +58,7 @@
 #include "gstv4l2deviceprovider.h"
 #include "gstv4l2transform.h"
 #include "gstxilinxscd.h"
+#include "gstxlnxabrscaler.h"
 
 /* used in gstv4l2object.c and v4l2_calls.c */
 GST_DEBUG_CATEGORY (v4l2_debug);
@@ -266,6 +267,8 @@ plugin_init (GstPlugin * plugin)
       !gst_element_register (plugin, "v4l2radio", GST_RANK_NONE,
           GST_TYPE_V4L2RADIO) ||
       !gst_xilinx_scd_register (plugin) ||
+      !gst_element_register (plugin, "xlnxabrscaler", GST_RANK_NONE,
+          GST_TYPE_XLNX_ABR_SCALER) ||
       !gst_device_provider_register (plugin, "v4l2deviceprovider",
           GST_RANK_PRIMARY, GST_TYPE_V4L2_DEVICE_PROVIDER)
       /* etc. */
