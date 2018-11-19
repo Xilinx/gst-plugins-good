@@ -2557,10 +2557,20 @@ sort_by_frame_size (GstStructure * s1, GstStructure * s2)
 }
 
 static void
+add_interlaced_feature (GstCaps * caps, guint i)
+{
+  GstCapsFeatures *feat;
+
+  feat = gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL);
+  gst_caps_set_features (caps, i, feat);
+}
+
+static void
 gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
     guint32 format, GstCaps * caps, GstStructure * s)
 {
   GstStructure *alt_s = NULL;
+  gboolean add_interlaced_feat = FALSE;
 
   /* Encoded stream on output buffer need to be parsed */
   if (v4l2object->type == V4L2_BUF_TYPE_VIDEO_OUTPUT ||
@@ -2596,8 +2606,19 @@ gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
 
   gst_caps_append_structure (caps, s);
 
-  if (alt_s)
+  /* Add the INTERLACED feature if the mode is alternate */
+  if (!g_strcmp0 (gst_structure_get_string (s, "interlace-mode"), "alternate"))
+    add_interlaced_feat = TRUE;
+
+  if (add_interlaced_feat)
+    add_interlaced_feature (caps, gst_caps_get_size (caps) - 1);
+
+  if (alt_s) {
     gst_caps_append_structure (caps, alt_s);
+
+    if (add_interlaced_feat)
+      add_interlaced_feature (caps, gst_caps_get_size (caps) - 1);
+  }
 }
 
 static GstCaps *
