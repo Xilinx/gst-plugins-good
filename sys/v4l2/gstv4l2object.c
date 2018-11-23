@@ -1630,6 +1630,17 @@ gst_v4l2_object_get_caps_helper (GstV4L2FormatFlags flags)
 
       if (alt_s)
         gst_caps_append_structure (caps, alt_s);
+
+      if (gst_structure_has_name (structure, "video/x-raw")) {
+        /* Add an 'alternate' variant of the caps with the feature */
+        alt_s = gst_structure_copy (structure);
+        gst_structure_set (alt_s, "interlace-mode", G_TYPE_STRING, "alternate",
+            NULL);
+
+        gst_caps_append_structure (caps, alt_s);
+        gst_caps_set_features (caps, gst_caps_get_size (caps) - 1,
+            gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL));
+      }
     }
   }
 
