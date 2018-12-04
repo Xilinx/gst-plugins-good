@@ -69,6 +69,7 @@ good_tests = [
   [ 'elements/rtp-payloading' ],
   [ 'elements/rtph261' ],
   [ 'elements/rtph263' ],
+  [ 'elements/rtph264' ],
   [ 'elements/rtpvp9' ],
   [ 'elements/rtpaux' ],
   [ 'elements/rtpbin' ],
