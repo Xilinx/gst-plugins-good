@@ -70,6 +70,7 @@ good_tests = [
   [ 'elements/rtph261' ],
   [ 'elements/rtph263' ],
   [ 'elements/rtph264' ],
+  [ 'elements/rtph265' ],
   [ 'elements/rtpvp9' ],
   [ 'elements/rtpaux' ],
   [ 'elements/rtpbin' ],
