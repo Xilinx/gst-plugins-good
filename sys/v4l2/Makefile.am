@@ -75,7 +75,6 @@ noinst_HEADERS = \
 	gstv4l2vp9enc.h \
 	gstxilinxscd.h \
 	gstxlnxabrscaler.h \
-	v4l2_calls.h \
 	v4l2-utils.h \
 	tuner.h \
 	tunerchannel.h \
