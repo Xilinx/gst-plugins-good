@@ -2212,8 +2212,11 @@ gst_v4l2_object_add_interlace_mode (GstV4l2Object * v4l2object,
     if (fmt.fmt.pix.field == V4L2_FIELD_ALTERNATE)
       fmt.fmt.pix.height /= 2;
 
-    if (gst_v4l2_object_try_fmt (v4l2object, &fmt) == 0 &&
-        gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)
+    if (!v4l2object->skip_try_fmt_probes
+        && gst_v4l2_object_try_fmt (v4l2object, &fmt) != 0)
+      continue;
+
+    if (gst_v4l2_object_get_interlace_mode (fmt.fmt.pix.field, &interlace_mode)
         && prev != interlace_mode) {
       GValue interlace_enum = { 0, };
       const gchar *mode_string;
@@ -2498,10 +2501,10 @@ return_data:
       "height", G_TYPE_INT, (gint) height, NULL);
 
   gst_v4l2_object_add_aspect_ratio (v4l2object, s);
+  gst_v4l2_object_add_interlace_mode (v4l2object, s, width, height,
+      pixelformat);
 
   if (!v4l2object->skip_try_fmt_probes) {
-    gst_v4l2_object_add_interlace_mode (v4l2object, s, width, height,
-        pixelformat);
     gst_v4l2_object_add_colorspace (v4l2object, s, width, height, pixelformat);
   }
 
@@ -2874,10 +2877,11 @@ default_frame_sizes:
 
     gst_v4l2_object_add_aspect_ratio (v4l2object, tmp);
 
+    /* We could consider setting interlace mode from min and max. */
+    gst_v4l2_object_add_interlace_mode (v4l2object, tmp, max_w, max_h,
+        pixelformat);
+
     if (!v4l2object->skip_try_fmt_probes) {
-      /* We could consider setting interlace mode from min and max. */
-      gst_v4l2_object_add_interlace_mode (v4l2object, tmp, max_w, max_h,
-          pixelformat);
       /* We could consider to check colorspace for min too, in case it depends on
        * the size. But in this case, min and max could not be enough */
       gst_v4l2_object_add_colorspace (v4l2object, tmp, max_w, max_h,
@@ -3672,17 +3676,13 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   }
 
   /* In case we have skipped the try_fmt probes, we'll need to set the
-   * colorimetry and interlace-mode back into the caps. */
+   * colorimetry back into the caps. */
   if (v4l2object->skip_try_fmt_probes) {
     if (!gst_structure_has_field (s, "colorimetry")) {
       gchar *str = gst_video_colorimetry_to_string (&info.colorimetry);
       gst_structure_set (s, "colorimetry", G_TYPE_STRING, str, NULL);
       g_free (str);
     }
-
-    if (!gst_structure_has_field (s, "interlace-mode"))
-      gst_structure_set (s, "interlace-mode", G_TYPE_STRING,
-          gst_video_interlace_mode_to_string (info.interlace_mode), NULL);
   }
 
   if (try_only)                 /* good enough for trying only */
