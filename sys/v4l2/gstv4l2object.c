@@ -2568,12 +2568,51 @@ sort_by_frame_size (GstStructure * s1, GstStructure * s2)
 }
 
 static void
-add_interlaced_feature (GstCaps * caps, guint i)
+check_alternate_and_append_struct (GstCaps * caps, GstStructure * s)
 {
-  GstCapsFeatures *feat;
+  const GValue *mode;
 
-  feat = gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL);
-  gst_caps_set_features (caps, i, feat);
+  mode = gst_structure_get_value (s, "interlace-mode");
+  if (!mode)
+    goto done;
+
+  if (G_VALUE_HOLDS_STRING (mode)) {
+    /* Add the INTERLACED feature if the mode is alternate */
+    if (!g_strcmp0 (gst_structure_get_string (s, "interlace-mode"),
+            "alternate")) {
+      GstCapsFeatures *feat;
+
+      feat = gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL);
+      gst_caps_set_features (caps, gst_caps_get_size (caps) - 1, feat);
+    }
+  } else if (GST_VALUE_HOLDS_LIST (mode)) {
+    /* If the mode is a list containing alternate, remove it from the list and add a
+     * variant with interlace-mode=alternate and the INTERLACED feature. */
+    GValue alter = G_VALUE_INIT;
+    GValue inter = G_VALUE_INIT;
+
+    g_value_init (&alter, G_TYPE_STRING);
+    g_value_set_string (&alter, "alternate");
+
+    /* Cannot use gst_value_can_intersect() as it requires args to have the
+     * same type. */
+    if (gst_value_intersect (&inter, mode, &alter)) {
+      GValue minus_alter = G_VALUE_INIT;
+      GstStructure *copy;
+
+      gst_value_subtract (&minus_alter, mode, &alter);
+      gst_structure_take_value (s, "interlace-mode", &minus_alter);
+
+      copy = gst_structure_copy (s);
+      gst_structure_take_value (copy, "interlace-mode", &inter);
+      gst_caps_append_structure_full (caps, copy,
+          gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL));
+    }
+    g_value_unset (&alter);
+  }
+
+done:
+  gst_caps_append_structure (caps, s);
 }
 
 static void
@@ -2581,7 +2620,6 @@ gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
     guint32 format, GstCaps * caps, GstStructure * s)
 {
   GstStructure *alt_s = NULL;
-  gboolean add_interlaced_feat = FALSE;
 
   /* Encoded stream on output buffer need to be parsed */
   if (v4l2object->type == V4L2_BUF_TYPE_VIDEO_OUTPUT ||
@@ -2615,20 +2653,10 @@ gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
     }
   }
 
-  gst_caps_append_structure (caps, s);
-
-  /* Add the INTERLACED feature if the mode is alternate */
-  if (!g_strcmp0 (gst_structure_get_string (s, "interlace-mode"), "alternate"))
-    add_interlaced_feat = TRUE;
-
-  if (add_interlaced_feat)
-    add_interlaced_feature (caps, gst_caps_get_size (caps) - 1);
+  check_alternate_and_append_struct (caps, s);
 
   if (alt_s) {
-    gst_caps_append_structure (caps, alt_s);
-
-    if (add_interlaced_feat)
-      add_interlaced_feature (caps, gst_caps_get_size (caps) - 1);
+    check_alternate_and_append_struct (caps, alt_s);
   }
 }
 
