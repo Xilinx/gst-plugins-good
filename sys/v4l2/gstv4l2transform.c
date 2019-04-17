@@ -896,6 +896,22 @@ gst_v4l2_transform_prepare_output_buffer (GstBaseTransform * trans,
     GstStructure *config = gst_buffer_pool_get_config (pool);
     gint min = self->v4l2output->min_buffers == 0 ?
         GST_V4L2_MIN_BUFFERS (self->v4l2output) : self->v4l2output->min_buffers;
+
+    if (self->v4l2output->mode == GST_V4L2_IO_USERPTR ||
+        self->v4l2output->mode == GST_V4L2_IO_DMABUF_IMPORT) {
+      if (!gst_v4l2_object_try_import (self->v4l2output, inbuf)) {
+        GST_ERROR_OBJECT (self, "cannot import buffers from upstream");
+        return GST_FLOW_ERROR;
+      }
+
+      if (self->v4l2output->need_video_meta) {
+        /* We may need video meta if imported buffer is using non-standard
+         * stride/padding */
+        gst_buffer_pool_config_add_option (config,
+            GST_BUFFER_POOL_OPTION_VIDEO_META);
+      }
+    }
+
     gst_buffer_pool_config_set_params (config, self->incaps,
         self->v4l2output->info.size, min, min);
 
