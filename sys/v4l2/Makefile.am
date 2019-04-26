@@ -52,6 +52,7 @@ noinst_HEADERS = \
 	ext/types-compat.h \
 	ext/v4l2-common.h \
 	ext/v4l2-controls.h \
+	ext/xilinx-v4l2-controls.h \
 	ext/videodev2.h \
 	gstv4l2allocator.h \
 	gstv4l2bufferpool.h \
