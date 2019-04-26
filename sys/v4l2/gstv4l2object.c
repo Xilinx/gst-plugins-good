@@ -1587,6 +1587,13 @@ done:
   return template;
 }
 
+#define SYNC_IP_DEV_ENCODER "/dev/xvsfsync0"
+
+static gboolean
+xlnx_ll_supported (void)
+{
+  return g_file_test (SYNC_IP_DEV_ENCODER, G_FILE_TEST_EXISTS);
+}
 
 static GstCaps *
 gst_v4l2_object_get_caps_helper (GstV4L2FormatFlags flags)
@@ -1640,6 +1647,13 @@ gst_v4l2_object_get_caps_helper (GstV4L2FormatFlags flags)
         gst_caps_append_structure (caps, alt_s);
         gst_caps_set_features (caps, gst_caps_get_size (caps) - 1,
             gst_caps_features_new (GST_CAPS_FEATURE_FORMAT_INTERLACED, NULL));
+
+        /* Add one variant for XLNX LL */
+        alt_s = gst_structure_copy (structure);
+
+        gst_caps_append_structure (caps, alt_s);
+        gst_caps_set_features (caps, gst_caps_get_size (caps) - 1,
+            gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_XLNX_LL, NULL));
       }
     }
   }
@@ -2601,6 +2615,16 @@ done:
 }
 
 static void
+dup_struct_with_xlnx_ll (GstCaps * caps, GstStructure * s)
+{
+  GstStructure *copy;
+
+  copy = gst_structure_copy (s);
+  gst_caps_append_structure_full (caps, copy,
+      gst_caps_features_new (GST_CAPS_FEATURE_MEMORY_XLNX_LL, NULL));
+}
+
+static void
 gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
     guint32 format, GstCaps * caps, GstStructure * s)
 {
@@ -2642,6 +2666,15 @@ gst_v4l2_object_update_and_append (GstV4l2Object * v4l2object,
 
   if (alt_s) {
     check_alternate_and_append_struct (caps, alt_s);
+  }
+
+  if ((v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE
+          || v4l2object->type == V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE)
+      && xlnx_ll_supported ()) {
+    dup_struct_with_xlnx_ll (caps, s);
+    if (alt_s) {
+      dup_struct_with_xlnx_ll (caps, alt_s);
+    }
   }
 }
 
