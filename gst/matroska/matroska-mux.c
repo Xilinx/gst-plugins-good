@@ -2530,6 +2530,9 @@ gst_matroska_mux_write_colour (GstMatroskaMux * mux,
     case GST_VIDEO_COLOR_MATRIX_BT2020:
       matrix_id = 9;
       break;
+    default:
+      GST_FIXME_OBJECT (mux, "Unhandled color matrix %d", matrix_id);
+      break;
   }
 
   switch (videocontext->colorimetry.range) {
@@ -2576,8 +2579,21 @@ gst_matroska_mux_write_colour (GstMatroskaMux * mux,
     case GST_VIDEO_TRANSFER_SRGB:
       transfer_id = 13;
       break;
+    case GST_VIDEO_TRANSFER_BT2020_10:
+      transfer_id = 14;
+      break;
     case GST_VIDEO_TRANSFER_BT2020_12:
       transfer_id = 15;
+      break;
+    case GST_VIDEO_TRANSFER_SMPTE2084:
+      transfer_id = 16;
+      break;
+    case GST_VIDEO_TRANSFER_ARIB_STD_B67:
+      transfer_id = 18;
+      break;
+    default:
+      GST_FIXME_OBJECT (mux,
+          "Unhandled transfer characteristic %d", transfer_id);
       break;
   }
 
@@ -2619,6 +2635,9 @@ gst_matroska_mux_write_colour (GstMatroskaMux * mux,
       break;
     case GST_VIDEO_COLOR_PRIMARIES_EBU3213:
       primaries_id = 22;
+      break;
+    default:
+      GST_FIXME_OBJECT (mux, "Unhandled color primaries %d", primaries_id);
       break;
   }
 
