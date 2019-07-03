@@ -27,6 +27,7 @@ v4l2_sources = [
   'tuner.c',
   'tunerchannel.c',
   'tunernorm.c',
+  'ext/xlnx-ll/xvfbsync.c',
 ]
 
 cdata.set('GST_V4L2_ENABLE_PROBE', get_option('v4l2-probe'))

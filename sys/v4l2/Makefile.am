@@ -29,14 +29,16 @@ libgstvideo4linux2_la_SOURCES = gstv4l2.c \
 				v4l2-utils.c \
 				tuner.c \
 				tunerchannel.c \
-				tunernorm.c
+				tunernorm.c \
+				ext/xlnx-ll/xvfbsync.c
 
 libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 				 $(GST_BASE_CFLAGS) \
 				 $(GST_CFLAGS) \
 				 $(X_CFLAGS) \
 				 $(LIBV4L2_CFLAGS) \
-				 $(GUDEV_CFLAGS)
+				 $(GUDEV_CFLAGS) \
+				 $(PTHREAD_CFLAGS)
 
 libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
 libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
@@ -79,5 +81,6 @@ noinst_HEADERS = \
 	v4l2-utils.h \
 	tuner.h \
 	tunerchannel.h \
-	tunernorm.h
-
+	tunernorm.h \
+	ext/xlnx-ll/xvfbsync.h \
+	ext/xlnx-ll/xvsfsync.h
