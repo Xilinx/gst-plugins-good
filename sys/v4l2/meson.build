@@ -30,6 +30,7 @@ v4l2_sources = [
   'tuner.c',
   'tunerchannel.c',
   'tunernorm.c',
+  'ext/xlnx-ll/xvfbsync.c',
 ]
 
 v4l2 = get_option('v4l2')
@@ -60,7 +61,7 @@ if have_v4l2
     v4l2_sources,
     c_args : gst_plugins_good_args,
     include_directories : [configinc, libsinc],
-    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, gudev_dep, libv4l2_dep],
+    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, gudev_dep, libv4l2_dep, dependency('threads')],
     install : true,
     install_dir : plugins_install_dir,
   )
