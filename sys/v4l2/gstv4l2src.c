@@ -523,8 +523,27 @@ gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps, GstStructure * pref_s)
 }
 
 static gboolean
+gst_v4l2src_set_low_latency_capture_mode (GstV4l2Src * src)
+{
+  GstV4l2Object *v4l2object = src->v4l2object;
+  struct v4l2_control control = { 0, };
+
+  control.id = V4L2_CID_XILINX_LOW_LATENCY;
+  control.value = XVIP_LOW_LATENCY;
+
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_CTRL, &control) != 0) {
+    GST_WARNING_OBJECT (v4l2object->dbg_obj,
+        "Failed to enable low latency on capture device");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
 gst_v4l2src_negotiate (GstBaseSrc * basesrc)
 {
+  GstV4l2Src *v4l2src = GST_V4L2SRC (basesrc);
   GstCaps *thiscaps;
   GstCaps *caps = NULL;
   GstCaps *peercaps = NULL;
@@ -558,6 +577,7 @@ gst_v4l2src_negotiate (GstBaseSrc * basesrc)
     /* now fixate */
     if (!gst_caps_is_empty (caps)) {
       GstStructure *pref = NULL;
+      GstCapsFeatures *features;
 
       if (peercaps && !gst_caps_is_any (peercaps))
         pref = gst_caps_get_structure (peercaps, 0);
@@ -579,6 +599,18 @@ gst_v4l2src_negotiate (GstBaseSrc * basesrc)
       } else if (gst_caps_is_fixed (caps)) {
         /* yay, fixed caps, use those then */
         result = gst_base_src_set_caps (basesrc, caps);
+      }
+
+      features = gst_caps_get_features (caps, 0);
+      if (features &&
+          gst_caps_features_contains (features,
+              GST_CAPS_FEATURE_MEMORY_XLNX_LL)) {
+        v4l2src->xlnx_ll = TRUE;
+
+        if (!gst_v4l2src_set_low_latency_capture_mode (v4l2src)) {
+          GST_ERROR_OBJECT (v4l2src, "Driver failed to activate XLNX-LL");
+          result = FALSE;
+        }
       }
     }
     gst_caps_unref (caps);
@@ -786,6 +818,8 @@ gst_v4l2src_start (GstBaseSrc * src)
 
   v4l2src->has_bad_timestamp = FALSE;
   v4l2src->last_timestamp = 0;
+
+  v4l2src->xlnx_ll = FALSE;
 
   return TRUE;
 }
