@@ -4776,19 +4776,21 @@ gst_v4l2_object_try_import (GstV4l2Object * obj, GstBuffer * buffer)
       struct v4l2_format format;
       gint wanted_stride[GST_VIDEO_MAX_PLANES] = { 0, };
       guint32 padded_height;
+      guint plane_height[GST_VIDEO_MAX_PLANES];
 
       format = obj->format;
 
-      if (vmeta->n_planes > 1) {
-        padded_height = vmeta->offset[1] / vmeta->stride[0];
+      if (gst_video_meta_get_plane_height (vmeta, plane_height)) {
+        padded_height = plane_height[0];
+        GST_DEBUG_OBJECT (obj->dbg_obj, "Padded height %u", padded_height);
+
+        obj->align.padding_bottom =
+            padded_height - GST_VIDEO_INFO_HEIGHT (&obj->info);
       } else {
-        padded_height = gst_buffer_get_size (buffer) / vmeta->stride[0];
+        GST_WARNING_OBJECT (obj->dbg_obj,
+            "Failed to compute padded height; keep the default one");
+        padded_height = format.fmt.pix_mp.height;
       }
-
-      obj->align.padding_bottom =
-          padded_height - GST_VIDEO_INFO_HEIGHT (&obj->info);
-
-      GST_DEBUG_OBJECT (obj->dbg_obj, "Padded height %u", padded_height);
 
       /* update the current format with the stride we want to import from */
       if (V4L2_TYPE_IS_MULTIPLANAR (obj->type)) {
