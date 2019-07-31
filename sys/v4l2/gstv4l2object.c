@@ -4125,7 +4125,7 @@ gst_v4l2_object_set_crop (GstV4l2Object * obj)
   struct v4l2_crop crop = { 0 };
 
   sel.type = obj->type;
-  sel.target = V4L2_SEL_TGT_CROP;
+  sel.target = V4L2_SEL_TGT_COMPOSE;
   sel.flags = 0;
   sel.r.left = obj->align.padding_left;
   sel.r.top = obj->align.padding_top;
