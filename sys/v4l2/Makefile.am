@@ -83,4 +83,4 @@ noinst_HEADERS = \
 	tunerchannel.h \
 	tunernorm.h \
 	ext/xlnx-ll/xvfbsync.h \
-	ext/xlnx-ll/xvsfsync.h
+	ext/xlnx-ll/xlnxsync.h
