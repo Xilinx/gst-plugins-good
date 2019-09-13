@@ -513,9 +513,8 @@ gst_v4l2_object_new (GstElement * element,
   v4l2object->keep_aspect = TRUE;
 
   v4l2object->n_v4l2_planes = 0;
-
   v4l2object->no_initial_format = FALSE;
-
+  v4l2object->enc_sync_chan.sync_channel.enabled = FALSE;
   /* We now disable libv4l2 by default, but have an env to enable it. */
 #ifdef HAVE_LIBV4L2
   if (g_getenv ("GST_V4L2_USE_LIBV4L2")) {
@@ -1967,6 +1966,24 @@ gst_v4l2src_value_simplify (GValue * val)
 }
 
 static gboolean
+gst_v4l2_object_set_low_latency_capture_mode (GstV4l2Object * v4l2object,
+    gboolean enable)
+{
+  struct v4l2_control control = { 0, };
+
+  control.id = V4L2_CID_XILINX_LOW_LATENCY;
+  control.value = enable ? XVIP_LOW_LATENCY_ENABLE : XVIP_LOW_LATENCY_DISABLE;
+
+  if (v4l2object->ioctl (v4l2object->video_fd, VIDIOC_S_CTRL, &control) != 0) {
+    GST_WARNING_OBJECT (v4l2object->dbg_obj,
+        "Failed to enable low latency on capture device");
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+static gboolean
 gst_v4l2_object_get_interlace_mode (enum v4l2_field field,
     GstVideoInterlaceMode * interlace_mode)
 {
@@ -3400,6 +3417,7 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   enum v4l2_ycbcr_encoding matrix = 0;
   enum v4l2_xfer_func transfer = 0;
   GstStructure *s;
+  GstCapsFeatures *features;
 
   g_return_val_if_fail (!v4l2object->skip_try_fmt_probes ||
       gst_caps_is_writable (caps), FALSE);
@@ -3861,6 +3879,14 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     GST_VIDEO_INFO_FPS_D (&info) = fps_d;
   }
 
+  features = gst_caps_get_features (caps, 0);
+  if (features &&
+      gst_caps_features_contains (features, GST_CAPS_FEATURE_MEMORY_XLNX_LL)) {
+    v4l2object->xlnx_ll = TRUE;
+    if (!gst_v4l2_object_set_low_latency_capture_mode (v4l2object, TRUE))
+      GST_ERROR_OBJECT (v4l2object, "Driver failed to activate XLNX-LL");
+  }
+
 done:
   /* add boolean return, so we can fail on drivers bugs */
   gst_v4l2_object_save_format (v4l2object, fmtdesc, &format, &info, &align);
@@ -4309,6 +4335,14 @@ gst_v4l2_object_stop (GstV4l2Object * v4l2object)
       gst_object_unref (v4l2object->pool);
     }
     v4l2object->pool = NULL;
+  }
+
+  if (v4l2object->enc_sync_chan.sync_channel.enabled) {
+    xvfbsync_enc_sync_chan_depopulate (&v4l2object->enc_sync_chan);
+    xvfbsync_syncip_depopulate (&v4l2object->syncip);
+    close (v4l2object->syncip.fd);
+    if (!gst_v4l2_object_set_low_latency_capture_mode (v4l2object, FALSE))
+      GST_ERROR_OBJECT (v4l2object, "Driver failed to deactivate XLNX-LL");
   }
 
   GST_V4L2_SET_INACTIVE (v4l2object);
