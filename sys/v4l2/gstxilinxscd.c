@@ -99,7 +99,7 @@ gst_xilinx_scd_get_property (GObject * object,
 
     case PROP_THRESHOLD:
       gst_v4l2_get_attribute (self->subdev, V4L2_CID_XILINX_SCD_THRESHOLD,
-          &self->thresh_val);
+          (int *) &self->thresh_val);
       g_value_set_uint (value, self->thresh_val);
       break;
 
