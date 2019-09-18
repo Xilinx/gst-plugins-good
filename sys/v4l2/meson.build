@@ -52,7 +52,7 @@ if cc.has_header('linux/videodev2.h') or cc.has_header('sys/videodev2.h') or cc.
     v4l2_sources,
     c_args : gst_plugins_good_args,
     include_directories : [configinc, libsinc],
-    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, gudev_dep] + libv4l2_deps,
+    dependencies : [gstbase_dep, gstvideo_dep, gstallocators_dep, gudev_dep, dependency('threads')] + libv4l2_deps,
     install : true,
     install_dir : plugins_install_dir,
   )
