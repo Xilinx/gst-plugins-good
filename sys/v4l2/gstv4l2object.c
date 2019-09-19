@@ -3135,7 +3135,9 @@ gst_v4l2_object_extrapolate_info (GstV4l2Object * v4l2object,
 
   g_return_if_fail (v4l2object->n_v4l2_planes == 1);
 
-  padded_height = info->height + align->padding_top + align->padding_bottom;
+  padded_height =
+      GST_VIDEO_INFO_FIELD_HEIGHT (info) + align->padding_top +
+      align->padding_bottom;
 
   for (i = 0; i < finfo->n_planes; i++) {
     estride = gst_v4l2_object_extrapolate_stride (finfo, i, stride);
@@ -3211,7 +3213,8 @@ gst_v4l2_object_save_format (GstV4l2Object * v4l2object,
     padded_height = GST_ROUND_UP_N (padded_height, tile_height);
   }
 
-  align->padding_bottom = padded_height - info->height - align->padding_top;
+  align->padding_bottom =
+      padded_height - GST_VIDEO_INFO_FIELD_HEIGHT (info) - align->padding_top;
 
   /* setup the strides and offset */
   if (V4L2_TYPE_IS_MULTIPLANAR (v4l2object->type)) {
@@ -4168,7 +4171,7 @@ gst_v4l2_object_set_crop (GstV4l2Object * obj)
   sel.r.left = obj->align.padding_left;
   sel.r.top = obj->align.padding_top;
   sel.r.width = obj->info.width;
-  sel.r.height = obj->info.height;
+  sel.r.height = GST_VIDEO_INFO_FIELD_HEIGHT (&obj->info);
 
   crop.type = obj->type;
   crop.c = sel.r;
@@ -4480,7 +4483,7 @@ gst_v4l2_object_match_buffer_layout (GstV4l2Object * obj, guint n_planes,
       GST_DEBUG_OBJECT (obj->dbg_obj, "Padded height %u", padded_height);
 
       obj->align.padding_bottom =
-          padded_height - GST_VIDEO_INFO_HEIGHT (&obj->info);
+          padded_height - GST_VIDEO_INFO_FIELD_HEIGHT (&obj->info);
     } else {
       GST_WARNING_OBJECT (obj->dbg_obj,
           "Failed to compute padded height; keep the default one");
@@ -4600,6 +4603,7 @@ gst_v4l2_object_match_buffer_layout_from_struct (GstV4l2Object * obj,
   GstVideoInfo info;
   GstVideoAlignment alig;
   gsize plane_size[GST_VIDEO_MAX_PLANES];
+  guint padded_height;
 
   if (!validate_video_meta_struct (obj, s))
     return FALSE;
@@ -4641,9 +4645,16 @@ gst_v4l2_object_match_buffer_layout_from_struct (GstV4l2Object * obj,
   GST_DEBUG_OBJECT (obj->dbg_obj,
       "try matching buffer layout requested by downstream");
 
+  /* FIXME: clarify the semantic of GST_VIDEO_INFO_PLANE_HEIGHT() in interlace mode */
+  padded_height = GST_VIDEO_INFO_PLANE_HEIGHT (&info, 0, plane_size);
+  if (GST_VIDEO_INFO_INTERLACE_MODE (&info) ==
+      GST_VIDEO_INTERLACE_MODE_ALTERNATE) {
+    GST_DEBUG_OBJECT (obj->dbg_obj, "The height is halved for interlaced");
+    padded_height /= 2;
+  }
+
   gst_v4l2_object_match_buffer_layout (obj, GST_VIDEO_INFO_N_PLANES (&info),
-      info.offset, info.stride, buffer_size,
-      GST_VIDEO_INFO_PLANE_HEIGHT (&info, 0, plane_size));
+      info.offset, info.stride, buffer_size, padded_height);
 
   return TRUE;
 }
