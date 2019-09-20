@@ -528,7 +528,6 @@ gst_v4l2src_fixate (GstBaseSrc * basesrc, GstCaps * caps, GstStructure * pref_s)
 static gboolean
 gst_v4l2src_negotiate (GstBaseSrc * basesrc)
 {
-  GstV4l2Src *v4l2src = GST_V4L2SRC (basesrc);
   GstCaps *thiscaps;
   GstCaps *caps = NULL;
   GstCaps *peercaps = NULL;
