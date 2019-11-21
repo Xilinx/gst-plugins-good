@@ -2173,7 +2173,9 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
       cinfo->transfer = GST_VIDEO_TRANSFER_SMPTE240M;
       break;
     case V4L2_XFER_FUNC_NONE:
-      cinfo->transfer = GST_VIDEO_TRANSFER_GAMMA10;
+      GST_WARNING
+          ("GAMMA 10, 18, 20, 22, 28 transfer functions all share the same V4L2 enumeration. Force caps to be renegotiated with upstream elements' caps");
+      ret = FALSE;
       break;
     case V4L2_XFER_FUNC_DEFAULT:
       /* nothing, just use defaults for colorspace */
@@ -3750,11 +3752,8 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
         goto invalid_colorimetry;
     }
   } else {
-    /* The driver (or libv4l2) is miss-behaving, just ignore colorimetry from
-     * the TRY_FMT */
+    /* The driver (or libv4l2) is miss-behaving, allow caps to be renegotiated with upstream elements' caps */
     disable_colorimetry = TRUE;
-    if (gst_structure_has_field (s, "colorimetry"))
-      gst_structure_remove_field (s, "colorimetry");
   }
 
   /* In case we have skipped the try_fmt probes, we'll need to set the
