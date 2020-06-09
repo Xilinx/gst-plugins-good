@@ -424,6 +424,16 @@ gst_v4l2_object_install_properties_helper (GObjectClass * gobject_class,
           "When enabled, the pixel aspect ratio will be enforced", TRUE,
           G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 
+  /**
+   * GstV4l2Src:force-ntsc-tv:
+   *
+   * When enabled, capture NTSC DV (720x480i) content from
+   * NTSC TV D1 (720x486i) source.
+   */
+  g_object_class_install_property (gobject_class, PROP_FORCE_NTSC_TV,
+      g_param_spec_boolean ("force-ntsc-tv", "Capture NTSC DV from NTSC TV D1",
+          "When enabled, capture NTSC DV (720x480i) content from NTSC TV D1 (720x486i) source.",
+          FALSE, G_PARAM_READWRITE | G_PARAM_STATIC_STRINGS));
 }
 
 void
@@ -511,6 +521,7 @@ gst_v4l2_object_new (GstElement * element,
   v4l2object->colors = NULL;
 
   v4l2object->keep_aspect = TRUE;
+  v4l2object->force_ntsc_tv = FALSE;
 
   v4l2object->n_v4l2_planes = 0;
   v4l2object->no_initial_format = FALSE;
@@ -706,6 +717,9 @@ gst_v4l2_object_set_property_helper (GstV4l2Object * v4l2object,
     case PROP_FORCE_ASPECT_RATIO:
       v4l2object->keep_aspect = g_value_get_boolean (value);
       break;
+    case PROP_FORCE_NTSC_TV:
+      v4l2object->force_ntsc_tv = g_value_get_boolean (value);
+      break;
     default:
       return FALSE;
       break;
@@ -802,6 +816,9 @@ gst_v4l2_object_get_property_helper (GstV4l2Object * v4l2object,
       break;
     case PROP_FORCE_ASPECT_RATIO:
       g_value_set_boolean (value, v4l2object->keep_aspect);
+      break;
+    case PROP_FORCE_NTSC_TV:
+      g_value_set_boolean (value, v4l2object->force_ntsc_tv);
       break;
     default:
       return FALSE;
@@ -3442,6 +3459,13 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
   fps_n = GST_VIDEO_INFO_FPS_N (&info);
   fps_d = GST_VIDEO_INFO_FPS_D (&info);
 
+  if (v4l2object->force_ntsc_tv && height == 240) {
+    height = 243;
+    width = 720;
+    GST_LOG_OBJECT (v4l2object->dbg_obj,
+        "Forcing format to TV D1 NTSC (720x486i)");
+  }
+
   /* if encoded format (GST_VIDEO_INFO_N_PLANES return 0)
    * or if contiguous is prefered */
   n_v4l_planes = GST_VIDEO_INFO_N_PLANES (&info);
@@ -4205,6 +4229,12 @@ gst_v4l2_object_set_crop (GstV4l2Object * obj)
   sel.r.top = obj->align.padding_top;
   sel.r.width = obj->info.width;
   sel.r.height = GST_VIDEO_INFO_FIELD_HEIGHT (&obj->info);
+
+  if (obj->force_ntsc_tv && sel.r.height == 240) {
+    sel.r.height = 243;
+    sel.r.width = 720;
+    GST_LOG_OBJECT (obj->dbg_obj, "Forcing crop to TV D1 NTSC (720x486i)");
+  }
 
   crop.type = obj->type;
   crop.c = sel.r;
