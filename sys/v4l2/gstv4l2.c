@@ -232,6 +232,11 @@ gst_v4l2_probe_and_register (GstPlugin * plugin)
           sink_caps, src_caps);
     }
     /* else if ( ... etc. */
+    /* Register xlnxroi plugin */
+    if (gst_xlnx_roi_is_transform (sink_caps, src_caps)) {
+      gst_xlnx_roi_register (plugin, basename, it->device_path,
+          sink_caps, src_caps);
+    }
 
     gst_caps_unref (sink_caps);
     gst_caps_unref (src_caps);

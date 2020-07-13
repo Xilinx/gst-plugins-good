@@ -29,6 +29,8 @@ libgstvideo4linux2_la_SOURCES = edid-utils.c \
 				gstv4l2vp9enc.c \
 				gstxilinxscd.c \
 				gstxlnxabrscaler.c \
+				gstxlnxroi.c \
+				gstface.cc \
 				v4l2_calls.c \
 				v4l2-utils.c \
 				tuner.c \
@@ -44,7 +46,16 @@ libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 				 $(GUDEV_CFLAGS) \
 				 $(PTHREAD_CFLAGS)
 
-libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS)
+libgstvideo4linux2_la_CXXFLAGS = $(GST_PLUGINS_BASE_CFLAGS) \
+                 $(GST_CXXFLAGS) \
+                 $(OPENCV_CFLAGS) \
+                 $(VITIS_CFLAGS) \
+                 $(OPENCV2_CFLAGS)
+
+libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) \
+                $(OPENCV_LDFLAGS) \
+                $(VITIS_LDFLAGS)
+
 libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
 				 -lgstallocators-$(GST_API_VERSION) \
 				 -lgstvideo-$(GST_API_VERSION) \
@@ -52,6 +63,8 @@ libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
 				 $(GST_LIBS) \
 				 $(LIBV4L2_LIBS) \
 				 $(GUDEV_LIBS) \
+				 $(OPENCV_LIBS) \
+				 $(VITIS_LIBS) \
 				 $(LIBRT)
 
 noinst_HEADERS = \
@@ -85,6 +98,8 @@ noinst_HEADERS = \
 	gstv4l2vp9enc.h \
 	gstxilinxscd.h \
 	gstxlnxabrscaler.h \
+	gstxlnxroi.h \
+	gstface.h \
 	v4l2-utils.h \
 	tuner.h \
 	tunerchannel.h \
