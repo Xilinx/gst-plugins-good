@@ -713,8 +713,10 @@ gst_v4l2_buffer_pool_streamoff (GstV4l2BufferPool * pool)
             errno, g_strerror (errno));
 
       pool->streaming = FALSE;
-
       GST_DEBUG_OBJECT (pool, "Stopped streaming");
+
+      if (pool->obj->xlnx_ll_dma_started)
+        pool->obj->xlnx_ll_dma_started = FALSE;
 
       if (pool->vallocator)
         gst_v4l2_allocator_flush (pool->vallocator);
@@ -1571,8 +1573,18 @@ gst_v4l2_buffer_pool_release_buffer (GstBufferPool * bpool, GstBuffer * buffer)
 
             gst_v4l2_allocator_reset_group (pool->vallocator, group);
             /* queue back in the device */
-            if (pool->other_pool)
+            if (pool->other_pool) {
+              if (pool->streaming && pool->obj->xlnx_ll
+                  && !pool->obj->xlnx_ll_dma_started) {
+                GST_INFO_OBJECT (pool,
+                    "Don't acquire from downstream as dma not started");
+                pclass->release_buffer (bpool, buffer);
+                break;
+              }
+
               ret = gst_v4l2_buffer_pool_prepare_buffer (pool, buffer, NULL);
+            }
+
             if (ret != GST_FLOW_OK ||
                 gst_v4l2_buffer_pool_qbuf (pool, buffer, group) != GST_FLOW_OK)
               pclass->release_buffer (bpool, buffer);
