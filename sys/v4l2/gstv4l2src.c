@@ -247,6 +247,7 @@ gst_v4l2src_init (GstV4l2Src * v4l2src)
 
   gst_video_mastering_display_info_init (&v4l2src->minfo);
   gst_video_content_light_level_init (&v4l2src->cinfo);
+  v4l2src->is_hdr_supported = TRUE;
 }
 
 
@@ -1146,6 +1147,7 @@ gst_v4l2src_hdr_get_metadata (GstV4l2Src * self)
   gst_video_content_light_level_init (&cinfo);
 
   if (!gst_v4l2src_get_controls (self, control, 1)) {
+    self->is_hdr_supported = FALSE;
     GST_ERROR_OBJECT (self, "Failed to get HDR metadata: %s",
         g_strerror (errno));
   } else {
@@ -1247,7 +1249,8 @@ gst_v4l2src_create (GstPushSrc * src, GstBuffer ** buf)
     if (G_UNLIKELY (ret != GST_FLOW_OK))
       goto alloc_failed;
 
-    gst_v4l2src_hdr_get_metadata (v4l2src);
+    if (v4l2src->is_hdr_supported)
+      gst_v4l2src_hdr_get_metadata (v4l2src);
 
     ret = gst_v4l2_buffer_pool_process (pool, buf);
 
