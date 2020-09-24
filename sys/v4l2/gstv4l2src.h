@@ -72,6 +72,7 @@ struct _GstV4l2Src
   /* Timestamp sanity check */
   GstClockTime last_timestamp;
   gboolean has_bad_timestamp;
+  gboolean has_monotonic_clock;
 
   /* TRUE if using Xilinx low latency capture */
   gboolean xlnx_ll;
