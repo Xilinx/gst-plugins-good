@@ -2,7 +2,8 @@ plugin_LTLIBRARIES = libgstvideo4linux2.la
 
 include $(top_srcdir)/common/gst-glib-gen.mak
 
-libgstvideo4linux2_la_SOURCES = gstv4l2.c \
+libgstvideo4linux2_la_SOURCES = edid-utils.c \
+				gstv4l2.c \
 				gstv4l2allocator.c \
 				gstv4l2colorbalance.c \
 				gstv4l2deviceprovider.c \
