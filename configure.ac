@@ -558,27 +558,14 @@ AG_GST_CHECK_FEATURE(GST_V4L2, [Video 4 Linux 2], video4linux2, [
   if test "x$HAVE_VIDEODEV" = "xno"; then
      AC_MSG_WARN([video4linux2 was not found])
   fi
-    OPENCV_INCLUDE_PATH="usr/include/opencv"
-    OPENCV_CFLAGS="-I$PKG_CONFIG_SYSROOT_DIR/$OPENCV_INCLUDE_PATH"
-    OPENCV_LIBDIR="usr/lib"
-    OPENCV_LDFLAGS="-L$PKG_CONFIG_SYSROOT_DIR/$OPENCV_LIBDIR"
-    OPENCV2_INCLUDE_PATH="usr/include/opencv2"
-    OPENCV2_CFLAGS="-I$PKG_CONFIG_SYSROOT_DIR/$OPENCV2_INCLUDE_PATH"
+    OPENCV_CFLAGS=`$PKG_CONFIG --cflags opencv4`
     OPENCV_LIBS="$LIBS -lopencv_imgcodecs -lopencv_highgui -lopencv_core -lopencv_imgproc -lopencv_ximgproc"
-    VITIS_INCLUDE_PATH="usr/include/vitis"
-    VITIS_CFLAGS="-I$PKG_CONFIG_SYSROOT_DIR/$VITIS_INCLUDE_PATH"
     VITIS_LIBS="$LIBS -lvitis_ai_library-facedetect"
-    VITIS_LIBDIR="usr/lib"
-    VITIS_LDFLAGS="-L$PKG_CONFIG_SYSROOT_DIR/$VITIS_LIBDIR"
   ])
 
 AC_SUBST(OPENCV_CFLAGS)
-AC_SUBST(OPENCV2_CFLAGS)
 AC_SUBST(OPENCV_LIBS)
-AC_SUBST(OPENCV_LDFLAGS)
-AC_SUBST(VITIS_CFLAGS)
 AC_SUBST(VITIS_LIBS)
-AC_SUBST(VITIS_LDFLAGS)
 
 # Optional gudev for device probing
 AC_ARG_WITH([gudev],
