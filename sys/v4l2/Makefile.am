@@ -48,13 +48,9 @@ libgstvideo4linux2_la_CFLAGS =   $(GST_PLUGINS_BASE_CFLAGS) \
 
 libgstvideo4linux2_la_CXXFLAGS = $(GST_PLUGINS_BASE_CFLAGS) \
                  $(GST_CXXFLAGS) \
-                 $(OPENCV_CFLAGS) \
-                 $(VITIS_CFLAGS) \
-                 $(OPENCV2_CFLAGS)
+                 $(OPENCV_CFLAGS)
 
-libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) \
-                $(OPENCV_LDFLAGS) \
-                $(VITIS_LDFLAGS)
+libgstvideo4linux2_la_LDFLAGS = $(GST_PLUGIN_LDFLAGS) -lpthread
 
 libgstvideo4linux2_la_LIBADD =   $(GST_PLUGINS_BASE_LIBS) \
 				 -lgstallocators-$(GST_API_VERSION) \
