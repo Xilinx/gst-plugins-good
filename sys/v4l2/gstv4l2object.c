@@ -2201,6 +2201,9 @@ gst_v4l2_object_get_colorspace (struct v4l2_format *fmt,
           ("GAMMA 10, 18, 20, 22, 28 transfer functions all share the same V4L2 enumeration. Force caps to be renegotiated with upstream elements' caps");
       ret = FALSE;
       break;
+    case V4L2_XFER_FUNC_SMPTE2084:
+      cinfo->transfer = GST_VIDEO_TRANSFER_SMPTE2084;
+      break;
     case V4L2_XFER_FUNC_DEFAULT:
       /* nothing, just use defaults for colorspace */
       break;
@@ -3590,6 +3593,9 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       break;
     case GST_VIDEO_TRANSFER_UNKNOWN:
       /* We let the driver pick a default one */
+      break;
+    case GST_VIDEO_TRANSFER_SMPTE2084:
+      transfer = V4L2_XFER_FUNC_SMPTE2084;
       break;
     default:
       GST_WARNING_OBJECT (v4l2object->dbg_obj,
