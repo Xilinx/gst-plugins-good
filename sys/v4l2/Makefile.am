@@ -29,6 +29,7 @@ libgstvideo4linux2_la_SOURCES = edid-utils.c \
 				gstv4l2vp9enc.c \
 				gstxilinxscd.c \
 				gstxlnxabrscaler.c \
+				subdev-utils.c \
 				v4l2_calls.c \
 				v4l2-utils.c \
 				tuner.c \
