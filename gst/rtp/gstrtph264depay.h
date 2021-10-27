@@ -59,6 +59,7 @@ struct _GstRtpH264Depay
 
   /* Work around broken payloaders wrt. FU-A & FU-B */
   guint8 current_fu_type;
+  guint16 last_fu_seqnum;
   GstClockTime fu_timestamp;
   gboolean fu_marker;
 
@@ -70,6 +71,9 @@ struct _GstRtpH264Depay
   /* downstream allocator */
   GstAllocator *allocator;
   GstAllocationParams params;
+
+  gboolean wait_for_keyframe;
+  gboolean waiting_for_keyframe;
 };
 
 struct _GstRtpH264DepayClass
