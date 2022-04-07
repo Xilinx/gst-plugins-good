@@ -3715,9 +3715,6 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
     case GST_VIDEO_COLOR_MATRIX_UNKNOWN:
       /* We let the driver pick a default one */
       break;
-    case GST_VIDEO_TRANSFER_ARIB_STD_B67:
-      transfer = V4L2_XFER_FUNC_HLG;
-      break;
     default:
       GST_WARNING_OBJECT (v4l2object->dbg_obj,
           "Unknown colorimetry matrix %d", info.colorimetry.matrix);
@@ -3756,6 +3753,9 @@ gst_v4l2_object_set_format_full (GstV4l2Object * v4l2object, GstCaps * caps,
       GST_WARNING_OBJECT (v4l2object->dbg_obj,
           "LOG 100, 316 transfer functions not supported");
       /* FIXME No known sensible default, maybe AdobeRGB ? */
+      break;
+    case GST_VIDEO_TRANSFER_ARIB_STD_B67:
+      transfer = V4L2_XFER_FUNC_HLG;
       break;
     case GST_VIDEO_TRANSFER_UNKNOWN:
       /* We let the driver pick a default one */
